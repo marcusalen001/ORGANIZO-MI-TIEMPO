@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Organizo mi tiempo</title>
+  <style>
+    :root{
+      --bg1:#1e3a8a;
+      --bg2:#0b1020;
+      --bg3:#020617;
+      --panel:rgba(255,255,255,.06);
+      --panel-2:rgba(0,0,0,.22);
+      --border:rgba(255,255,255,.10);
+      --text:#e5eefc;
+      --muted:#94a3b8;
+      --cyan:#22d3ee;
+      --amber:#fbbf24;
+      --indigo:#818cf8;
+      --fuchsia:#e879f9;
+      --rose:#fb7185;
+      --emerald:#34d399;
+      --shadow:0 20px 60px rgba(0,0,0,.45);
+      --radius:28px;
+      --radius-sm:18px;
+      --sidebar-width:180px;
+      --timeline-min-width:540px;
+      --time-col-width:62px;
+      --marker-height:58px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top, var(--bg1) 0%, var(--bg2) 40%, var(--bg3) 100%);
+    }
+
+    button{font:inherit}
+
+    .app{
+      min-height:100%;
+      padding:12px 10px 18px;
+    }
+
+    .shell{
+      max-width:1400px;
+      margin:0 auto;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:20px;
+      padding:9px;
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border-radius:999px;
+      border:1px solid rgba(34,211,238,.2);
+      background:rgba(34,211,238,.10);
+      color:#a5f3fc;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      padding:6px 10px;
+      margin-bottom:10px;
+    }
+
+    h1{
+      margin:0;
+      font-size:clamp(22px, 4vw, 34px);
+      line-height:1.05;
+      font-weight:900;
+      letter-spacing:-.03em;
+      color:#fff;
+    }
+
+    .subtitle{
+      margin-top:8px;
+      max-width:900px;
+      color:#cbd5e1;
+      line-height:1.45;
+      font-size:13px;
+    }
+
+    .controls{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .pill-group{
+      display:inline-flex;
+      padding:3px;
+      gap:4px;
+      border-radius:16px;
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      backdrop-filter: blur(10px);
+    }
+
+    .pill-btn,.ghost-btn{
+      border:0;
+      cursor:pointer;
+      border-radius:12px;
+      padding:8px 11px;
+      color:#cbd5e1;
+      background:transparent;
+      font-weight:800;
+      font-size:13px;
+      transition:.18s ease;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .pill-btn.active.cole{background:#22d3ee;color:#03121a}
+    .pill-btn.active.festivo{background:#e879f9;color:#22071e}
+
+    .ghost-btn{
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      backdrop-filter:blur(10px);
+    }
+    .ghost-btn:hover,.pill-btn:hover{transform:translateY(-1px)}
+
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+      margin-bottom:12px;
+    }
+
+    .stat{
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      border-radius:20px;
+      padding:11px;
+      min-height:64px;
+      backdrop-filter:blur(10px);
+    }
+
+    .stat-label{
+      font-size:11px;
+      font-weight:800;
+      color:var(--muted);
+      letter-spacing:.18em;
+      text-transform:uppercase;
+    }
+
+    .stat-value{
+      margin-top:6px;
+      font-size:16px;
+      font-weight:900;
+      color:#fff;
+    }
+
+    .status{
+      padding:11px;
+      border-radius:20px;
+      border:1px solid var(--border);
+      font-weight:800;
+      line-height:1.35;
+    }
+
+    .board-wrap{
+      overflow:auto;
+      border-radius:28px;
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      padding:9px;
+      backdrop-filter:blur(12px);
+    }
+
+    .board{
+      min-width:760px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+
+    .sidebar{
+      width:var(--sidebar-width);
+      flex:0 0 var(--sidebar-width);
+      border-radius:20px;
+      border:1px solid var(--border);
+      background:rgba(2,6,23,.72);
+      padding:9px;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+      transition:.18s ease;
+    }
+
+    .sidebar.hot{border-color:rgba(251,113,133,.55); box-shadow:0 0 0 2px rgba(244,63,94,.25)}
+
+    .sidebar-head,.timeline-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:12px;
+    }
+
+    .section-title{
+      font-size:13px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      color:#fff;
+    }
+
+    .microtag{
+      padding:5px 8px;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:#a5f3fc;
+      border:1px solid rgba(34,211,238,.2);
+      background:rgba(34,211,238,.10);
+    }
+    .microtag.hot{color:#fecdd3;border-color:rgba(251,113,133,.3);background:rgba(244,63,94,.15)}
+
+    .task-list{display:flex;flex-direction:column;gap:6px}
+
+    .side-card{
+      width:100%;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      border-radius:16px;
+      padding:10px;
+      cursor:grab;
+      color:var(--text);
+      transition:.18s ease;
+      text-align:left;
+    }
+    .side-card.active{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.15);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+    .side-card:hover{transform:translateY(-1px)}
+
+    .side-card-row{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .side-emoji, .marker-emoji, .drag-emoji{
+      width:32px;height:32px;display:grid;place-items:center;border-radius:12px;color:#fff;font-size:16px;
+      box-shadow:inset 0 1px 1px rgba(255,255,255,.18);
+      flex:0 0 38px;
+    }
+
+    .side-main{min-width:0;flex:1}
+    .side-title{font-size:12px;font-weight:800;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .side-sub{font-size:10px;font-weight:700;color:#94a3b8;margin-top:1px}
+    .side-state{padding:4px 7px;border-radius:999px;font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+    .side-state.on{background:rgba(16,185,129,.15);color:#86efac}
+    .side-state.off{background:#0f172a;color:#94a3b8}
+
+    .timeline-col{min-width:var(--timeline-min-width);flex:1}
+    .nightday{
+      display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;color:var(--muted);
+      font-size:11px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;
+    }
+    .badge{
+      display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;
+      border:1px solid var(--border);background:rgba(255,255,255,.05)
+    }
+    .badge.night{color:#c7d2fe;border-color:rgba(129,140,248,.2);background:rgba(129,140,248,.1)}
+    .badge.day{color:#fde68a;border-color:rgba(251,191,36,.2);background:rgba(251,191,36,.1)}
+
+    .timeline-row{display:flex;gap:8px;align-items:flex-start}
+    .time-col{width:var(--time-col-width);flex:0 0 var(--time-col-width);position:relative}
+    .time-label{
+      position:absolute;left:0;right:0;transform:translateY(-50%);padding-right:8px;text-align:right;
+      font-size:10px;font-weight:900;letter-spacing:.01em;
+    }
+    .time-label.day{color:#fde68a}
+    .time-label.night{color:#c7d2fe}
+
+    .timeline{
+      position:relative;
+      flex:1;
+      overflow:hidden;
+      border-radius:30px;
+      border:1px solid var(--border);
+      background:rgba(2,6,23,.72);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+      min-height:860px;
+      transition:.18s ease;
+    }
+    .timeline.hot{border-color:rgba(34,211,238,.45);box-shadow:0 0 0 2px rgba(34,211,238,.18), inset 0 1px 0 rgba(255,255,255,.05)}
+
+    .timeline::before{
+      content:"";position:absolute;inset:0;
+      background:
+        linear-gradient(180deg,rgba(79,70,229,.18) 0%,rgba(10,14,30,.28) 26%,rgba(251,191,36,.08) 58%,rgba(10,14,30,.3) 100%),
+        radial-gradient(circle at top right, rgba(34,211,238,.12), transparent 35%),
+        radial-gradient(circle at bottom left, rgba(168,85,247,.10), transparent 30%);
+      pointer-events:none;
+    }
+
+    .timeline-chip{
+      position:absolute;left:16px;top:16px;z-index:10;padding:7px 12px;border-radius:999px;
+      border:1px solid var(--border);background:rgba(0,0,0,.30);backdrop-filter:blur(8px);
+      font-size:11px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:#e2e8f0;
+    }
+
+    .now-line{position:absolute;left:20px;right:20px;z-index:20;border-top:2px dashed rgba(103,232,249,.8)}
+    .now-chip{
+      position:absolute;right:0;top:-12px;padding:5px 10px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;
+      color:#cffafe;background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.3);backdrop-filter:blur(8px)
+    }
+
+    .hour-line{position:absolute;left:0;right:0;border-top:1px solid rgba(255,255,255,.10)}
+
+    .segment{
+      position:absolute;left:20px;right:20px;border-radius:20px;border:1px solid rgba(255,255,255,.1);overflow:hidden;
+      backdrop-filter:blur(8px);z-index:5;
+    }
+    .segment-inner{display:flex;flex-direction:column;justify-content:center;height:100%;padding:10px 12px}
+    .segment-title{
+      display:inline-flex;align-items:center;gap:6px;max-width:max-content;padding:5px 8px;border-radius:999px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1);
+      color:#fff;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;
+    }
+    .segment-time{margin-top:6px;font-size:11px;font-weight:800;color:#e2e8f0}
+
+    .marker{
+      position:absolute;z-index:30;border-radius:18px;border:1px solid rgba(255,255,255,.16);padding:8px 10px;
+      color:white;cursor:grab;transition:.16s ease;text-align:left;min-height:var(--marker-height);
+      display:block;
+    }
+    .marker.dragging{opacity:.65;transform:translateY(-50%) scale(1.03)!important}
+    .marker.pulse{animation:pulse .7s ease}
+    @keyframes pulse{0%{transform:translateY(-50%) scale(1)}50%{transform:translateY(-50%) scale(1.035)}100%{transform:translateY(-50%) scale(1)}}
+
+    .marker-row{display:flex;align-items:center;gap:8px}
+    .marker-emoji, .drag-emoji{
+      width:34px;height:34px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.10);border-radius:12px;font-size:18px;
+    }
+    .marker-main{min-width:0;flex:1}
+    .marker-title{font-size:12px;font-weight:900;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .marker-time{font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.86);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .marker-grip{padding:6px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.10);font-size:14px;line-height:1}
+
+    .drag-ghost{
+      position:fixed;z-index:100;pointer-events:none;transform:translate(-50%,-50%);
+      border-radius:18px;border:1px solid rgba(255,255,255,.16);padding:10px 12px;min-width:190px;
+      box-shadow:0 18px 40px rgba(0,0,0,.4);backdrop-filter:blur(18px);color:white;
+    }
+    .drag-sub{font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.82)}
+
+    .icon-dot{display:inline-grid;place-items:center;width:16px;height:16px;font-size:14px}
+
+    @media (max-width: 900px){
+      .app{padding:8px 6px 12px}
+      .shell{padding:10px;border-radius:20px}
+      .stats{grid-template-columns:1fr}
+      .board{min-width:680px;gap:10px}
+      .sidebar{width:160px;flex-basis:160px;padding:8px}
+      .timeline-col{min-width:500px}
+      .time-col{width:54px;flex-basis:54px}
+      .timeline{min-height:760px}
+      .section-title{font-size:12px}
+      .ghost-btn,.pill-btn{padding:7px 10px;font-size:12px}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="shell">
+      <div class="topbar">
+        <div>
+          <div class="tag">Organizo mi tiempo</div>
+          <h1>Rutina visual del día</h1>
+          <div class="subtitle">Arrastra actividades desde la barra lateral a la línea de tiempo y devuélvelas a la barra para quitarlas. Cada rutina se guarda por separado.</div>
+        </div>
+        <div class="controls">
+          <div class="pill-group" id="routineTabs"></div>
+          <button class="ghost-btn" id="soundToggleBtn">🔊 Audio</button>
+          <button class="ghost-btn" id="resetBtn">↺ Reiniciar</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Rutina activa</div>
+          <div class="stat-value" id="routineLabel"></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Dormir</div>
+          <div class="stat-value" id="sleepLabel"></div>
+        </div>
+        <div class="status" id="statusBox"></div>
+      </div>
+
+      <div class="board-wrap">
+        <div class="board">
+          <div class="sidebar" id="sidebarZone">
+            <div class="sidebar-head">
+              <div class="section-title">Actividades</div>
+              <div class="microtag" id="sidebarBadge">arrastra</div>
+            </div>
+            <div class="task-list" id="sidebarList"></div>
+          </div>
+
+          <div class="timeline-col">
+            <div class="nightday">
+              <div class="badge night">🌙 Noche</div>
+              <div class="badge day">☀ Día</div>
+            </div>
+            <div class="timeline-row">
+              <div class="time-col" id="timeCol"></div>
+              <div class="timeline" id="timelineTrack">
+                <div class="timeline-chip" id="timelineChip">timeline</div>
+                <div class="now-line" id="nowLine"><div class="now-chip">Ahora</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STEP_MINUTES = 30;
+    const DAY_MINUTES = 24 * 60;
+    const STORAGE_KEY = 'organizo-mi-tiempo-routines-v3-html';
+
+    const TASK_CONFIG = [
+      { id:'wake', title:'Me levanto', time:7.5*60, color:'#3B82F6', emoji:'⏰', active:true },
+      { id:'school', title:'Voy al cole', time:9*60, color:'#22C55E', emoji:'🎒', active:true },
+      { id:'lunch', title:'Comida', time:14*60, color:'#F59E0B', emoji:'🍽️', active:true },
+      { id:'homework', title:'Deberes', time:15.5*60, color:'#8B5CF6', emoji:'✏️', active:true },
+      { id:'console', title:'Consola / juegos / móvil', time:16.5*60, color:'#F97316', emoji:'🎮', active:false },
+      { id:'football', title:'Entreno fútbol', time:17.5*60, color:'#06B6D4', emoji:'⚽', active:true },
+      { id:'events', title:'Eventos / celebraciones', time:18*60, color:'#E11D48', emoji:'🎉', active:false },
+      { id:'music', title:'Música', time:18.5*60, color:'#A855F7', emoji:'🎵', active:false },
+      { id:'park', title:'Parque', time:19*60, color:'#10B981', emoji:'🌳', active:true },
+      { id:'tv', title:'Televisión', time:19.5*60, color:'#EC4899', emoji:'📺', active:false },
+      { id:'shower', title:'Ducha', time:20*60, color:'#06B6D4', emoji:'🚿', active:true },
+      { id:'reading', title:'Lectura', time:20.5*60, color:'#14B8A6', emoji:'📚', active:false },
+      { id:'dinner', title:'Cena', time:21*60, color:'#EF4444', emoji:'🥣', active:true },
+      { id:'bed', title:'Me voy a la cama', time:22*60, color:'#6366F1', emoji:'🌙', active:true },
+    ];
+
+    function createBaseTasks(){
+      return TASK_CONFIG.map((task, index) => ({ ...task, seedOrder:index }));
+    }
+
+    function createColeRoutine(){
+      return createBaseTasks();
+    }
+
+    function createFestivoRoutine(){
+      return createBaseTasks().map(task => {
+        switch(task.id){
+          case 'wake': return { ...task, time:9*60, active:true };
+          case 'school': return { ...task, active:false };
+          case 'homework': return { ...task, active:false };
+          case 'console': return { ...task, time:11*60, active:true };
+          case 'events': return { ...task, time:12.5*60, active:true };
+          case 'football': return { ...task, active:false };
+          case 'park': return { ...task, time:18.5*60, active:true };
+          case 'tv': return { ...task, time:20*60, active:true };
+          case 'shower': return { ...task, time:21*60, active:true };
+          case 'dinner': return { ...task, time:21.5*60, active:true };
+          case 'bed': return { ...task, time:22.5*60, active:true };
+          default: return task;
+        }
+      });
+    }
+
+    function createDefaultRoutines(){
+      return { cole:createColeRoutine(), festivo:createFestivoRoutine() };
+    }
+
+    function clamp(value,min,max){ return Math.min(max, Math.max(min, value)); }
+    function sortTasks(tasks){ return [...tasks].sort((a,b)=> a.time !== b.time ? a.time-b.time : a.seedOrder-b.seedOrder); }
+    function formatHour(minutes){ const h = Math.floor(minutes/60); return `${String(h).padStart(2,'0')}:00`; }
+    function getPartOfDay(minutes){ if(minutes < 6*60) return 'de la madrugada'; if(minutes < 12*60) return 'de la mañana'; if(minutes < 20*60) return 'de la tarde'; return 'de la noche'; }
+    function formatKidTime(minutes){ const h24 = Math.floor(minutes/60)%24; const mins = minutes%60; const h12 = h24%12===0?12:h24%12; return `${h12}:${String(mins).padStart(2,'0')} ${getPartOfDay(minutes)}`; }
+    function formatDuration(minutes){ if(minutes<=0) return '0 min'; const h=Math.floor(minutes/60), m=minutes%60; if(h&&m) return `${h} h ${m} min`; if(h) return `${h} h`; return `${m} min`; }
+    function intervalDisplayHeight(duration){ if(duration<=30) return 108; if(duration<=60) return 124; if(duration<=90) return 136; if(duration<=120) return 146; if(duration<=180) return 152; return 156; }
+
+    function createAdaptiveLayout(activeTasks){
+      const sorted = sortTasks(activeTasks);
+      const uniqueTimes = [...new Set(sorted.map(task => task.time))].sort((a,b)=>a-b);
+      const points = [0, ...uniqueTimes.filter(time => time > 0 && time < DAY_MINUTES), DAY_MINUTES];
+      if(points.length < 2) points.push(DAY_MINUTES);
+      const intervals = [];
+      let currentTop = 0;
+      for(let i=0;i<points.length-1;i++){
+        const start = points[i], end = points[i+1], duration = end-start, displayHeight = intervalDisplayHeight(duration);
+        intervals.push({ start, end, duration, top:currentTop, displayHeight });
+        currentTop += displayHeight;
+      }
+      const totalHeight = Math.max(currentTop, 980);
+      function mapTimeToY(minutes){
+        const clamped = clamp(minutes,0,DAY_MINUTES);
+        if(clamped === DAY_MINUTES) return totalHeight;
+        const interval = intervals.find(item => clamped >= item.start && clamped <= item.end) || intervals[intervals.length-1];
+        const ratio = interval.end === interval.start ? 0 : (clamped - interval.start) / (interval.end - interval.start);
+        return interval.top + ratio * interval.displayHeight;
+      }
+      function mapYToTime(y){
+        const clampedY = clamp(y,0,totalHeight);
+        const interval = intervals.find(item => clampedY >= item.top && clampedY <= item.top + item.displayHeight) || intervals[intervals.length-1];
+        const ratio = interval.displayHeight === 0 ? 0 : (clampedY - interval.top) / interval.displayHeight;
+        const raw = interval.start + ratio * (interval.end - interval.start);
+        return clamp(Math.round(raw / STEP_MINUTES) * STEP_MINUTES, 0, DAY_MINUTES - STEP_MINUTES);
+      }
+      return { intervals, totalHeight, mapTimeToY, mapYToTime };
+    }
+
+    function buildSegments(sortedTasks, layout){
+      const segments = [];
+      if(!sortedTasks.length) return segments;
+      if(sortedTasks[0].time > 0){
+        segments.push({ id:'pre-day', title:'Madrugada', start:0, end:sortedTasks[0].time, color:'#334155', neutral:true, top:layout.mapTimeToY(0), height:Math.max(layout.mapTimeToY(sortedTasks[0].time)-layout.mapTimeToY(0),18) });
+      }
+      for(let i=0;i<sortedTasks.length;i++){
+        const current = sortedTasks[i];
+        const next = sortedTasks[i+1];
+        const end = next ? next.time : DAY_MINUTES;
+        if(end <= current.time) continue;
+        segments.push({ id:current.id, title:current.title, start:current.time, end, color:current.color, task:current, neutral:false, top:layout.mapTimeToY(current.time), height:Math.max(layout.mapTimeToY(end)-layout.mapTimeToY(current.time),18) });
+      }
+      return segments;
+    }
+
+    function getSlotGroups(tasks){
+      const grouped = {};
+      sortTasks(tasks).forEach(task => { const key = String(task.time); if(!grouped[key]) grouped[key]=[]; grouped[key].push(task.id); });
+      const placements = {};
+      Object.values(grouped).forEach(ids => ids.forEach((id,index)=> placements[id]={count:ids.length,index}));
+      return placements;
+    }
+
+    function getMarkerOffsets(placement){
+      if(!placement || placement.count===1) return {left:12,right:12};
+      if(placement.count===2) return placement.index===0 ? {left:12,right:52} : {left:52,right:12};
+      return { left:12 + placement.index*14, right:12 + (placement.count-1-placement.index)*14 };
+    }
+
+    function getZoneFromPointer(clientX, clientY){
+      const timelineRect = els.timelineTrack.getBoundingClientRect();
+      const sidebarRect = els.sidebarZone.getBoundingClientRect();
+      const insideTimeline = clientX >= timelineRect.left && clientX <= timelineRect.right && clientY >= timelineRect.top && clientY <= timelineRect.bottom;
+      if(insideTimeline) return 'timeline';
+      const insideSidebar = clientX >= sidebarRect.left && clientX <= sidebarRect.right && clientY >= sidebarRect.top && clientY <= sidebarRect.bottom;
+      if(insideSidebar) return 'sidebar';
+      return 'none';
+    }
+
+    function playModernSound(variant='drop'){
+      try{
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if(!AudioCtx) return;
+        if(!state.audioContext) state.audioContext = new AudioCtx();
+        const ctx = state.audioContext;
+        if(ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        const master = ctx.createGain();
+        master.gain.setValueAtTime(0.22, now);
+        master.connect(ctx.destination);
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(3200, now);
+        filter.Q.setValueAtTime(1.4, now);
+        filter.connect(master);
+
+        const osc1 = ctx.createOscillator(); const gain1 = ctx.createGain(); osc1.type='square';
+        const osc2 = ctx.createOscillator(); const gain2 = ctx.createGain(); osc2.type='triangle';
+        const osc3 = ctx.createOscillator(); const gain3 = ctx.createGain(); osc3.type='sine';
+
+        if(variant === 'remove'){
+          osc1.frequency.setValueAtTime(780, now); osc1.frequency.exponentialRampToValueAtTime(280, now+0.18);
+          osc2.frequency.setValueAtTime(390, now); osc2.frequency.exponentialRampToValueAtTime(170, now+0.16);
+          osc3.frequency.setValueAtTime(220, now); osc3.frequency.exponentialRampToValueAtTime(110, now+0.2);
+        }else if(variant === 'preview'){
+          osc1.frequency.setValueAtTime(420, now); osc1.frequency.exponentialRampToValueAtTime(1180, now+0.08);
+          osc2.frequency.setValueAtTime(620, now+0.02); osc2.frequency.exponentialRampToValueAtTime(920, now+0.12);
+          osc3.frequency.setValueAtTime(210, now); osc3.frequency.exponentialRampToValueAtTime(320, now+0.12);
+        }else{
+          osc1.frequency.setValueAtTime(320, now); osc1.frequency.exponentialRampToValueAtTime(1240, now+0.11);
+          osc2.frequency.setValueAtTime(540, now+0.015); osc2.frequency.exponentialRampToValueAtTime(860, now+0.11);
+          osc3.frequency.setValueAtTime(180, now); osc3.frequency.exponentialRampToValueAtTime(260, now+0.13);
+        }
+
+        gain1.gain.setValueAtTime(0.001, now); gain1.gain.linearRampToValueAtTime(0.08, now+0.012); gain1.gain.exponentialRampToValueAtTime(0.001, now+0.19);
+        gain2.gain.setValueAtTime(0.001, now); gain2.gain.linearRampToValueAtTime(0.055, now+0.016); gain2.gain.exponentialRampToValueAtTime(0.001, now+0.18);
+        gain3.gain.setValueAtTime(0.001, now); gain3.gain.linearRampToValueAtTime(0.03, now+0.02); gain3.gain.exponentialRampToValueAtTime(0.001, now+0.2);
+
+        osc1.connect(gain1); osc2.connect(gain2); osc3.connect(gain3);
+        gain1.connect(filter); gain2.connect(filter); gain3.connect(filter);
+        osc1.start(now); osc2.start(now); osc3.start(now);
+        osc1.stop(now+0.22); osc2.stop(now+0.20); osc3.stop(now+0.22);
+      }catch(e){}
+    }
+
+    const els = {
+      routineTabs: document.getElementById('routineTabs'),
+      soundToggleBtn: document.getElementById('soundToggleBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      routineLabel: document.getElementById('routineLabel'),
+      sleepLabel: document.getElementById('sleepLabel'),
+      statusBox: document.getElementById('statusBox'),
+      sidebarZone: document.getElementById('sidebarZone'),
+      sidebarBadge: document.getElementById('sidebarBadge'),
+      sidebarList: document.getElementById('sidebarList'),
+      timeCol: document.getElementById('timeCol'),
+      timelineTrack: document.getElementById('timelineTrack'),
+      timelineChip: document.getElementById('timelineChip'),
+      nowLine: document.getElementById('nowLine'),
+    };
+
+    const state = {
+      routines: createDefaultRoutines(),
+      selectedRoutine: 'cole',
+      dragging: null,
+      justMovedId: null,
+      soundOn: true,
+      nowMinutes: 0,
+      audioContext: null,
+    };
+
+    function loadState(){
+      try{
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if(!saved) return;
+        const parsed = JSON.parse(saved);
+        if(parsed && Array.isArray(parsed.cole) && Array.isArray(parsed.festivo)) state.routines = parsed;
+      }catch(e){}
+    }
+
+    function saveState(){
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.routines)); }catch(e){}
+    }
+
+    function getCurrentTasks(){ return state.routines[state.selectedRoutine] || []; }
+    function updateCurrentRoutineTasks(updater){
+      const base = getCurrentTasks();
+      const updated = typeof updater === 'function' ? updater(base) : updater;
+      state.routines[state.selectedRoutine] = updated;
+      saveState();
+    }
+
+    function getDerived(){
+      const tasks = getCurrentTasks();
+      const activeTasks = tasks.filter(task => task.active);
+      const sortedTasks = sortTasks(activeTasks);
+      const layout = createAdaptiveLayout(activeTasks);
+      const segments = buildSegments(sortedTasks, layout);
+      const slotPlacements = getSlotGroups(activeTasks);
+      return { tasks, activeTasks, sortedTasks, layout, segments, slotPlacements };
+    }
+
+    function getStatusMessage(sortedTasks, segments){
+      if(!sortedTasks.length) return { text:'No hay actividades activas. Arrastra una desde la barra lateral.', style:'border-color:rgba(251,191,36,.3);background:rgba(245,158,11,.12);color:#fde68a;' };
+      const slotMap = {};
+      sortedTasks.forEach(task => { const key = String(task.time); slotMap[key] = (slotMap[key]||0)+1; });
+      const repeated = Object.entries(slotMap).find(([,count]) => count > 1);
+      if(repeated) return { text:`Hay ${repeated[1]} actividades a la misma hora. Puedes separarlas arrastrando.`, style:'border-color:rgba(232,121,249,.3);background:rgba(217,70,239,.12);color:#f5d0fe;' };
+      const bed = sortedTasks.find(task => task.id === 'bed');
+      if(bed && bed.time > 22*60) return { text:'La hora de dormir se ha movido bastante tarde.', style:'border-color:rgba(251,113,133,.3);background:rgba(244,63,94,.12);color:#fecdd3;' };
+      const shortest = segments.filter(seg => !seg.neutral).sort((a,b)=>(a.end-a.start)-(b.end-b.start))[0];
+      if(shortest && shortest.end-shortest.start <= 30) return { text:`${shortest.title} tiene muy poco tiempo.`, style:'border-color:rgba(251,191,36,.3);background:rgba(245,158,11,.12);color:#fde68a;' };
+      return { text:`Rutina ${state.selectedRoutine === 'cole' ? 'cole' : 'festivo'} guardada automáticamente.`, style:'border-color:rgba(34,211,238,.3);background:rgba(34,211,238,.12);color:#a5f3fc;' };
+    }
+
+    function renderRoutineTabs(){
+      els.routineTabs.innerHTML = '';
+      const routines = [
+        { key:'cole', label:'🎒 Cole', cls:'cole' },
+        { key:'festivo', label:'📅 Festivo', cls:'festivo' },
+      ];
+      routines.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = `pill-btn ${state.selectedRoutine === item.key ? `active ${item.cls}` : ''}`;
+        btn.textContent = item.label;
+        btn.addEventListener('click', () => { state.selectedRoutine = item.key; render(); });
+        els.routineTabs.appendChild(btn);
+      });
+    }
+
+    function renderSidebar(tasks){
+      els.sidebarList.innerHTML = '';
+      tasks.forEach(task => {
+        const btn = document.createElement('button');
+        btn.className = `side-card ${task.active ? 'active' : ''}`;
+        btn.innerHTML = `
+          <div class="side-card-row">
+            <div class="side-emoji" style="background:${task.color}">${task.emoji}</div>
+            <div class="side-main">
+              <div class="side-title">${task.title}</div>
+              <div class="side-sub">${task.active ? formatKidTime(task.time) : 'Disponible'}</div>
+            </div>
+            <div class="side-state ${task.active ? 'on' : 'off'}">${task.active ? 'on' : 'off'}</div>
+          </div>
+        `;
+        btn.addEventListener('pointerdown', (event) => {
+          event.preventDefault();
+          state.dragging = {
+            id: task.id,
+            source:'sidebar',
+            origin: { ...task },
+            pointerX: event.clientX,
+            pointerY: event.clientY,
+            overZone:'sidebar',
+            previewTime: task.time,
+          };
+          render();
+        });
+        els.sidebarList.appendChild(btn);
+      });
+    }
+
+    function renderTimeScale(layout){
+      els.timeCol.innerHTML = '';
+      els.timeCol.style.height = `${layout.totalHeight}px`;
+      for(let hour=0; hour<=24; hour++){
+        const minutes = hour * 60;
+        const top = layout.mapTimeToY(minutes);
+        const div = document.createElement('div');
+        const isDay = minutes >= 7*60 && minutes < 20*60;
+        div.className = `time-label ${isDay ? 'day' : 'night'}`;
+        div.style.top = `${top}px`;
+        div.textContent = formatHour(minutes);
+        els.timeCol.appendChild(div);
+      }
+    }
+
+    function renderTimeline(derived){
+      const { activeTasks, sortedTasks, layout, segments, slotPlacements } = derived;
+      els.timelineTrack.style.height = `${layout.totalHeight}px`;
+      els.timelineTrack.querySelectorAll('.hour-line,.segment,.marker').forEach(el => el.remove());
+
+      const overTimeline = state.dragging?.overZone === 'timeline';
+      els.timelineTrack.classList.toggle('hot', !!overTimeline);
+      els.sidebarZone.classList.toggle('hot', state.dragging?.overZone === 'sidebar');
+      els.timelineChip.textContent = overTimeline ? 'suelta aquí' : 'timeline';
+      els.sidebarBadge.textContent = state.dragging?.overZone === 'sidebar' ? 'soltar aquí' : 'arrastra';
+      els.sidebarBadge.className = `microtag ${state.dragging?.overZone === 'sidebar' ? 'hot' : ''}`;
+
+      const nowTop = layout.mapTimeToY(state.nowMinutes);
+      els.nowLine.style.top = `${nowTop}px`;
+
+      for(let hour=0; hour<=24; hour++){
+        const minutes = hour * 60;
+        const top = layout.mapTimeToY(minutes);
+        const line = document.createElement('div');
+        line.className = 'hour-line';
+        line.style.top = `${top}px`;
+        els.timelineTrack.appendChild(line);
+      }
+
+      segments.forEach(segment => {
+        const card = document.createElement('div');
+        card.className = 'segment';
+        card.style.top = `${segment.top}px`;
+        card.style.height = `${segment.height}px`;
+        card.style.background = segment.neutral
+          ? 'linear-gradient(135deg, rgba(51,65,85,.42), rgba(15,23,42,.26))'
+          : `linear-gradient(135deg, ${segment.color}33, rgba(15,23,42,.18))`;
+        card.style.borderColor = segment.neutral ? 'rgba(148,163,184,.2)' : `${segment.color}66`;
+        card.innerHTML = `
+          <div class="segment-inner">
+            <div class="segment-title"><span class="icon-dot">${segment.task ? segment.task.emoji : '🌙'}</span>${segment.title}</div>
+            ${segment.height >= 90 ? `<div class="segment-time">${formatDuration(segment.end - segment.start)}</div>` : ''}
+          </div>
+        `;
+        els.timelineTrack.appendChild(card);
+      });
+
+      activeTasks.forEach(task => {
+        const marker = document.createElement('button');
+        marker.type = 'button';
+        marker.className = 'marker';
+        const isDragging = state.dragging?.id === task.id;
+        if(isDragging) marker.classList.add('dragging');
+        if(state.justMovedId === task.id) marker.classList.add('pulse');
+        const top = layout.mapTimeToY(task.time);
+        const offsets = getMarkerOffsets(slotPlacements[task.id]);
+        marker.style.top = `${top}px`;
+        marker.style.left = `${offsets.left}px`;
+        marker.style.right = `${offsets.right}px`;
+        marker.style.transform = 'translateY(-50%)';
+        marker.style.background = `linear-gradient(135deg, ${task.color}, rgba(15,23,42,.82))`;
+        marker.style.boxShadow = isDragging ? `0 16px 32px ${task.color}40, 0 10px 26px rgba(0,0,0,.38)` : `0 10px 22px rgba(0,0,0,.32)`;
+        marker.innerHTML = `
+          <div class="marker-row">
+            <div class="marker-emoji">${task.emoji}</div>
+            <div class="marker-main">
+              <div class="marker-title">${task.title}</div>
+              <div class="marker-time">${formatKidTime(task.time)}</div>
+            </div>
+            <div class="marker-grip">⋮⋮</div>
+          </div>
+        `;
+        marker.addEventListener('pointerdown', (event) => {
+          event.preventDefault();
+          state.dragging = {
+            id: task.id,
+            source:'timeline',
+            origin: { ...task },
+            pointerX: event.clientX,
+            pointerY: event.clientY,
+            overZone:'timeline',
+            previewTime: task.time,
+          };
+          render();
+        });
+        els.timelineTrack.appendChild(marker);
+      });
+
+      renderDragGhost(derived.tasks);
+    }
+
+    function renderDragGhost(tasks){
+      document.querySelectorAll('.drag-ghost').forEach(el => el.remove());
+      if(!state.dragging) return;
+      const draggingTask = tasks.find(task => task.id === state.dragging.id) || state.dragging.origin;
+      if(!draggingTask) return;
+      const ghost = document.createElement('div');
+      ghost.className = 'drag-ghost';
+      ghost.style.left = `${state.dragging.pointerX}px`;
+      ghost.style.top = `${state.dragging.pointerY}px`;
+      ghost.style.background = `linear-gradient(135deg, ${draggingTask.color}, rgba(15,23,42,.92))`;
+      ghost.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="drag-emoji">${draggingTask.emoji}</div>
+          <div style="min-width:0;flex:1;">
+            <div style="font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${draggingTask.title}</div>
+            <div class="drag-sub">${state.dragging.overZone === 'timeline' ? `soltar en ${formatKidTime(state.dragging.previewTime ?? draggingTask.time)}` : state.dragging.overZone === 'sidebar' ? 'soltar para quitar' : 'arrastra y suelta'}</div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(ghost);
+    }
+
+    function render(){
+      const derived = getDerived();
+      renderRoutineTabs();
+      renderSidebar(derived.tasks);
+      renderTimeScale(derived.layout);
+      renderTimeline(derived);
+
+      els.routineLabel.textContent = state.selectedRoutine === 'cole' ? 'Cole' : 'Festivo';
+      const bedTask = derived.tasks.find(task => task.id === 'bed');
+      els.sleepLabel.textContent = formatKidTime((bedTask && bedTask.time) || 22*60);
+      const status = getStatusMessage(derived.sortedTasks, derived.segments);
+      els.statusBox.style.cssText = status.style;
+      els.statusBox.innerHTML = `<div class="stat-label" style="color:inherit;opacity:.7">Estado</div><div style="margin-top:6px">${status.text}</div>`;
+      els.soundToggleBtn.textContent = state.soundOn ? '🔊 Sonido' : '🔇 Silencio';
+      els.resetBtn.textContent = `↺ Reiniciar ${state.selectedRoutine}`;
+    }
+
+    function setNow(){
+      const now = new Date();
+      state.nowMinutes = now.getHours()*60 + now.getMinutes();
+    }
+
+    function handlePointerMove(event){
+      if(!state.dragging) return;
+      const derived = getDerived();
+      const zone = getZoneFromPointer(event.clientX, event.clientY);
+      let previewTime = state.dragging.previewTime;
+
+      if(zone === 'timeline'){
+        const rect = els.timelineTrack.getBoundingClientRect();
+        const relativeY = getRelativeY(event.clientY, rect.top, derived.layout.totalHeight);
+        previewTime = derived.layout.mapYToTime(relativeY);
+        updateCurrentRoutineTasks(current => current.map(task => task.id === state.dragging.id ? { ...task, active:true, time:previewTime } : task));
+      } else if(!state.dragging.origin.active){
+        updateCurrentRoutineTasks(current => current.map(task => task.id === state.dragging.id ? { ...task, active:state.dragging.origin.active, time:state.dragging.origin.time } : task));
+      }
+
+      state.dragging = { ...state.dragging, pointerX:event.clientX, pointerY:event.clientY, overZone:zone, previewTime };
+      render();
+    }
+
+    function handlePointerUp(event){
+      if(!state.dragging) return;
+      const derived = getDerived();
+      const zone = getZoneFromPointer(event.clientX, event.clientY);
+      if(zone === 'timeline'){
+        const rect = els.timelineTrack.getBoundingClientRect();
+        const relativeY = getRelativeY(event.clientY, rect.top, derived.layout.totalHeight);
+        const dropTime = derived.layout.mapYToTime(relativeY);
+        updateCurrentRoutineTasks(current => current.map(task => task.id === state.dragging.id ? { ...task, active:true, time:dropTime } : task));
+        state.justMovedId = state.dragging.id;
+        if(state.soundOn) playModernSound('drop');
+      }else if(zone === 'sidebar'){
+        updateCurrentRoutineTasks(current => current.map(task => task.id === state.dragging.id ? { ...task, active:false } : task));
+        state.justMovedId = state.dragging.id;
+        if(state.soundOn) playModernSound('remove');
+      }else{
+        updateCurrentRoutineTasks(current => current.map(task => task.id === state.dragging.id ? { ...task, active:state.dragging.origin.active, time:state.dragging.origin.time } : task));
+      }
+      state.dragging = null;
+      render();
+      setTimeout(() => { state.justMovedId = null; render(); }, 700);
+    }
+
+    function getRelativeY(clientY, top, totalHeight){
+      return clamp(clientY - top, 0, totalHeight);
+    }
+
+    els.soundToggleBtn.addEventListener('click', () => { state.soundOn = !state.soundOn; render(); });
+    els.resetBtn.addEventListener('click', () => {
+      state.dragging = null; state.justMovedId = null;
+      state.routines[state.selectedRoutine] = state.selectedRoutine === 'cole' ? createColeRoutine() : createFestivoRoutine();
+      saveState(); render();
+    });
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    setNow();
+    setInterval(() => { setNow(); render(); }, 60000);
+    loadState();
+    render();
+  </script>
+</body>
+</html>
